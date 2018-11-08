@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "WheeledVehicle.h"
+#include "LockStepActorInterface.h"
 #include "VehicleAdvLockStepPawn.generated.h"
 
 class UPhysicalMaterial;
@@ -14,9 +15,12 @@ class UInputComponent;
 class UAudioComponent;
 
 UCLASS(config=Game)
-class AVehicleAdvLockStepPawn : public AWheeledVehicle
+class AVehicleAdvLockStepPawn
+	: public AWheeledVehicle
+	, public ILockStepActorInterface
 {
 	GENERATED_BODY()
+public:
 
 	/** Spring arm that will offset the camera */
 	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -47,7 +51,7 @@ class AVehicleAdvLockStepPawn : public AWheeledVehicle
 	UAudioComponent* EngineSoundComponent;
 
 public:
-	AVehicleAdvLockStepPawn();
+	AVehicleAdvLockStepPawn(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	/** The current speed as a string eg 10 km/h */
 	UPROPERTY(Category = Display, VisibleDefaultsOnly, BlueprintReadOnly)
@@ -76,6 +80,17 @@ public:
 	/** Initial offset of incar camera */
 	FVector InternalCameraOrigin;
 
+	/** PawnId, Assigned when spawn. */
+	UPROPERTY(Category = "LockStep", BlueprintReadWrite)
+	int32 LockStepPawnId;
+
+	UPROPERTY()
+	float CachedMoveForwardValue;
+	UPROPERTY()
+	float CachedMoveRightValue;
+
+public:
+
 	// Begin Pawn interface
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 	// End Pawn interface
@@ -84,9 +99,12 @@ public:
 	virtual void Tick(float Delta) override;
 protected:
 	virtual void BeginPlay() override;
-
 public:
 	// End Actor interface
+
+	// Begin ILockStepActorInterface interface
+	virtual void ReceiveStepAdvance_Implementation(int32 InStepIndex, float InDeltaTime, ETickingGroup InTickGroup = TG_PrePhysics) override;
+	// End ILockStepActorInterface interface
 
 	/** Handle pressing forwards */
 	void MoveForward(float Val);

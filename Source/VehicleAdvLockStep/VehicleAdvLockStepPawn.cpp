@@ -4,15 +4,17 @@
 #include "VehicleAdvLockStepWheelFront.h"
 #include "VehicleAdvLockStepWheelRear.h"
 #include "VehicleAdvLockStepHud.h"
+#include "ClientLockStepComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/PlayerState.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Components/AudioComponent.h"
 #include "Sound/SoundCue.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
-#include "WheeledVehicleMovementComponent4W.h"
+#include "LockStepWheeledVehicleMoveComp4W.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Controller.h"
@@ -30,7 +32,9 @@ const FName AVehicleAdvLockStepPawn::EngineAudioRPM("RPM");
 
 #define LOCTEXT_NAMESPACE "VehiclePawn"
 
-AVehicleAdvLockStepPawn::AVehicleAdvLockStepPawn()
+AVehicleAdvLockStepPawn::AVehicleAdvLockStepPawn(const FObjectInitializer& ObjectInitializer)
+	// Use hacked VehicleMovement4W for LockStepDemo.
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<ULockStepWheeledVehicleMoveComp4W>(AWheeledVehicle::VehicleMovementComponentName))
 {
 	// Car mesh
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CarMesh(TEXT("/Game/VehicleAdv/Vehicle/Vehicle_SkelMesh.Vehicle_SkelMesh"));
@@ -112,6 +116,12 @@ AVehicleAdvLockStepPawn::AVehicleAdvLockStepPawn()
 	// Set the inertia scale. This controls how the mass of the vehicle is distributed.
 	Vehicle4W->InertiaTensorScale = FVector(1.0f, 1.333f, 1.2f);
 
+	// LockStep special
+	// For LockStep purpose, we disable the default movement tick and manually call it in DoStepAdvance
+	Vehicle4W->bAutoActivate = false;
+	Vehicle4W->SetComponentTickEnabled(false);
+	// ~ LockStep special
+
 	// Create a spring arm component for our chase camera
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetRelativeLocation(FVector(0.0f, 0.0f, 34.0f));
@@ -191,25 +201,91 @@ void AVehicleAdvLockStepPawn::SetupPlayerInputComponent(class UInputComponent* P
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AVehicleAdvLockStepPawn::OnResetVR); 
 }
 
+//void AVehicleAdvLockStepPawn::DoStepAdvance(int32 InStepIndex, float InDeltaTime)
+void AVehicleAdvLockStepPawn::ReceiveStepAdvance_Implementation(int32 InStepIndex, float InDeltaTime, ETickingGroup InTickGroup /*= TG_PrePhysics*/)
+{
+	// -- Do pawn logic here first. --
+
+	// -- Do movement tick manually. --
+
+	// By default, MovementComponent's tick function is the Prerequisite of OwnerActor's.
+	// So we do the movement tick after pawn logics.
+	UWheeledVehicleMovementComponent* Movement = GetVehicleMovement();
+	if (Movement) {
+
+		// ??? What will happen when the tag is different from the default ticks route ???
+		//Movement->SetComponentTickEnabled(true);
+		// ??? ~
+
+		Movement->TickComponent(InDeltaTime, ELevelTick::LEVELTICK_All, nullptr);
+
+		// ??? If unquote last ??? section, this section need also unquote.
+		//Movement->SetComponentTickEnabled(false);
+		// ??? ~
+	}
+
+}
+
 void AVehicleAdvLockStepPawn::MoveForward(float Val)
 {
-	GetVehicleMovementComponent()->SetThrottleInput(Val);
-
+	// Push command.
+	UClientLockStepComponent* LockStepComponent = nullptr;
+	if (Controller
+		&& CachedMoveForwardValue != Val
+		&& nullptr != (LockStepComponent = Controller->FindComponentByClass<UClientLockStepComponent>())
+		) {
+		CachedMoveForwardValue = Val;
+		LockStepComponent->PushCommand(
+			FString::Printf(TEXT("ExecMoveForward %d %f")
+				, LockStepPawnId
+				, Val)
+		);
+	}
 }
 
 void AVehicleAdvLockStepPawn::MoveRight(float Val)
 {
-	GetVehicleMovementComponent()->SetSteeringInput(Val);
+	// Push command.
+	UClientLockStepComponent* LockStepComponent = nullptr;
+	if (Controller
+		&& CachedMoveRightValue != Val
+		&& nullptr != (LockStepComponent = Controller->FindComponentByClass<UClientLockStepComponent>())
+		) {
+		CachedMoveRightValue = Val;
+		LockStepComponent->PushCommand(
+			FString::Printf(TEXT("ExecMoveRight %d %f")
+				, LockStepPawnId
+				, Val)
+		);
+	}
 }
 
 void AVehicleAdvLockStepPawn::OnHandbrakePressed()
 {
-	GetVehicleMovementComponent()->SetHandbrakeInput(true);
+	UClientLockStepComponent* LockStepComponent = nullptr;
+	if (Controller
+		&& nullptr != (LockStepComponent = Controller->FindComponentByClass<UClientLockStepComponent>())
+		) {
+		LockStepComponent->PushCommand(
+			FString::Printf(TEXT("ExecHandbrake %d %d")
+				, LockStepPawnId
+				, 1)
+		);
+	}
 }
 
 void AVehicleAdvLockStepPawn::OnHandbrakeReleased()
 {
-	GetVehicleMovementComponent()->SetHandbrakeInput(false);
+	UClientLockStepComponent* LockStepComponent = nullptr;
+	if (Controller
+		&& nullptr != (LockStepComponent = Controller->FindComponentByClass<UClientLockStepComponent>())
+		) {
+		LockStepComponent->PushCommand(
+			FString::Printf(TEXT("ExecHandbrake %d %d")
+				, LockStepPawnId
+				, 0)
+		);
+	}
 }
 
 void AVehicleAdvLockStepPawn::OnToggleCamera()
