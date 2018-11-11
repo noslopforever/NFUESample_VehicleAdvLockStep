@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "VehicleAdvLockStep.h"
-#include "GameLockStepComponent.generated.h"
+#include "ServerLockStepComponent.generated.h"
 
 /** Action sent from clients.
 */
@@ -52,13 +52,13 @@ public:
 /** Game lockstep component.
 */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class VEHICLEADVLOCKSTEP_API UGameLockStepComponent : public UActorComponent
+class VEHICLEADVLOCKSTEP_API UServerLockStepComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
 	// Sets default values for this component's properties
-	UGameLockStepComponent();
+	UServerLockStepComponent();
 
 	/** Actions gathered from all clients of this frame. */
 	UPROPERTY()

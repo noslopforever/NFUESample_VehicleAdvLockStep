@@ -1,6 +1,6 @@
 // Under MIT licensee, see github page (https://github.com/noslopforever/NFUESample_VehicleAdvLockStep) for more informations.
 
-#include "GameLockStepComponent.h"
+#include "ServerLockStepComponent.h"
 #include "Engine/World.h"
 #include "Public/EngineUtils.h"
 #include "GameFramework/GameState.h"
@@ -10,7 +10,7 @@
 #include "ClientLockStepComponent.h"
 
 // Sets default values for this component's properties
-UGameLockStepComponent::UGameLockStepComponent()
+UServerLockStepComponent::UServerLockStepComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -24,7 +24,7 @@ UGameLockStepComponent::UGameLockStepComponent()
 
 
 // Called when the game starts
-void UGameLockStepComponent::BeginPlay()
+void UServerLockStepComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -59,13 +59,13 @@ void UGameLockStepComponent::BeginPlay()
 
 }
 
-void UGameLockStepComponent::EndPlay(EEndPlayReason::Type InEndPlayReason)
+void UServerLockStepComponent::EndPlay(EEndPlayReason::Type InEndPlayReason)
 {
 	// TODO do some notifications.
 }
 
 // Called every frame
-void UGameLockStepComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UServerLockStepComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -90,17 +90,17 @@ void UGameLockStepComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	}
 }
 
-float UGameLockStepComponent::StaticGetStepAdvanceTime()
+float UServerLockStepComponent::StaticGetStepAdvanceTime()
 {
 	return 5e-2f;
 }
 
-float UGameLockStepComponent::StaticGetActionsSyncTime()
+float UServerLockStepComponent::StaticGetActionsSyncTime()
 {
 	return 2e-1f;
 }
 
-void UGameLockStepComponent::AuthStartLockStepGame()
+void UServerLockStepComponent::AuthStartLockStepGame()
 {
 	// This method should only be called once during a game.
 	if (bLockStepStarted) {
@@ -139,7 +139,7 @@ void UGameLockStepComponent::AuthStartLockStepGame()
 	bLockStepStarted = 1;
 }
 
-//void UGameLockStepComponent::AuthManualStep(bool InUseManualStep /*= true*/)
+//void UServerLockStepComponent::AuthManualStep(bool InUseManualStep /*= true*/)
 //{
 //	// Close server automatic step advance.
 //	bServerAutoStep = 0;
@@ -148,7 +148,7 @@ void UGameLockStepComponent::AuthStartLockStepGame()
 //	DoStepAdvance();
 //}
 
-void UGameLockStepComponent::AuthDoStepAdvance()
+void UServerLockStepComponent::AuthDoStepAdvance()
 {
 	bool bWorldSupported = false;
 	UWorld* World = GetWorldChecked(bWorldSupported);

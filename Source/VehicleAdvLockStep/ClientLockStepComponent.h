@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameLockStepComponent.h"
+#include "ServerLockStepComponent.h"
 #include "Components/ActorComponent.h"
 #include "ClientLockStepComponent.generated.h"
 

@@ -1,6 +1,6 @@
 // Under MIT licensee, see github page (https://github.com/noslopforever/NFUESample_VehicleAdvLockStep) for more informations.
 #include "ClientLockStepComponent.h"
-#include "GameLockStepComponent.h"
+#include "ServerLockStepComponent.h"
 #include "VehicleAdvLockStepPawn.h"
 #include "LockStepActorInterface.h"
 #include "GameFramework/PlayerController.h"
@@ -90,8 +90,8 @@ void UClientLockStepComponent::C2S_RequestStep_Implementation(const FString& InE
 	AGameModeBase* GameMode = GetWorld()->GetAuthGameMode();
 	checkf(GameMode, TEXT("C2S_RequestStep must be called with authority."));
 
-	UGameLockStepComponent* GameLockStepComp = GameMode->FindComponentByClass<UGameLockStepComponent>();
-	if (ensureMsgf(GameLockStepComp, TEXT("UClientLockStepComponent must pair with UGameLockStepComponent."))) {
+	UServerLockStepComponent* GameLockStepComp = GameMode->FindComponentByClass<UServerLockStepComponent>();
+	if (ensureMsgf(GameLockStepComp, TEXT("UClientLockStepComponent must pair with UServerLockStepComponent."))) {
 		// Add actions to current step's action list.
 		FActionInfo ActionInfo;
 		ActionInfo.PlayerId = PlayerController->PlayerState->PlayerId;
@@ -226,7 +226,7 @@ void UClientLockStepComponent::ProcessQueuedSteps()
 			ExecutePlayerAction(ActionInfo.PlayerId, ActionInfo.ExecCode);
 		}
 
-		const float DeltaTime = UGameLockStepComponent::StaticGetStepAdvanceTime();
+		const float DeltaTime = UServerLockStepComponent::StaticGetStepAdvanceTime();
 
 		// # Do logic and physics tick
 
